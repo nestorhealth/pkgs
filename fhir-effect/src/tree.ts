@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Array, Match, Option, pipe, Schema } from "effect";
 
 export type Leaf =
   | string
@@ -7,7 +7,7 @@ export type Leaf =
   | readonly number[]
   | boolean
   | readonly boolean[];
-
+  
 export type Tree = {
   readonly [key: string]:
   | Leaf
@@ -40,4 +40,3 @@ export const Tree = Schema.Record({
 export const isTree = Schema.is(Tree);
 export const validate = Schema.decodeUnknownEither(Tree);
 export const encode = Schema.encodeSync(Tree);
-
