@@ -29,7 +29,7 @@ export function hd(path: string) {
   return split(path)[0];
 }
 
-export function removeHd(path: string) {
+export function tl(path: string) {
   return split(path).slice(1).join(".");
 }
 

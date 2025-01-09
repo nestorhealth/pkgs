@@ -1,7 +1,7 @@
-import { Array, Effect, Option, pipe, Record, String } from "effect";
+import { Array, Effect, Match, Option, pipe, Record, String } from "effect";
 import _master from "../fhir.schema.json";
-import { JSONSchema6 } from "json-schema";
-import FHIREffectError from "../error";
+import { JSONSchema6, JSONSchema6Object } from "json-schema";
+import FHIREffectError, { fail } from "../error";
 
 interface MasterSchema {
   $schema: string;
@@ -22,13 +22,32 @@ export function findDefinition(
   return pipe(
     Record.get(master.definitions, key),
     Option.match({
-      onNone: () =>
-        Effect.fail(
-          new FHIREffectError(`No definition found for FHIR key ${key}.`),
-        ),
+      onNone: () => fail(`No definition found for FHIR key ${key}.`),
       onSome: (jsonSchema) => Effect.succeed(jsonSchema),
     }),
   );
+}
+
+export function lookup(
+  schema: JSONSchema6,
+  property: string
+): Effect.Effect<JSONSchema6, FHIREffectError> {
+  return Match.value(schema).pipe(
+    Match.when({ type: "object", properties: Match.record }, (schema) => pipe(
+      schema.properties,
+      Record.get(property),
+      Option.match({
+        onNone: () => fail(`Property ${property} does not exist for the provided schema.`),
+        onSome: (propSchema) => Match.value(propSchema).pipe(
+          Match.when(Match.boolean, () => fail(`Expected a JSON Schema object but got boolean...`)),
+          Match.orElse(
+            (propSchema) => Effect.succeed(propSchema)
+          )
+        )
+      })
+    )),
+    Match.orElse(() => fail(`Expected an Object schema, but got ${schema.type}`))
+  )
 }
 
 const last = (url: string) => pipe(url, String.split("/"), Array.last);
@@ -40,9 +59,7 @@ export function jump(
     schema.$ref,
     Option.fromNullable,
     Option.match({
-      onNone: () => Effect.fail(
-        new FHIREffectError(`No $ref property found for the given schema ${schema}`)
-      ),
+      onNone: () => fail(`No $ref property found for the given schema ${schema}`),
       onSome: (ref) => pipe(
         ref,
         last,
