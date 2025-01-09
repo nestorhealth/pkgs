@@ -1,6 +1,6 @@
 import { Array, Brand, Effect, Match, Option, pipe, Record, String, Tuple } from "effect";
 import _master from "../fhir.schema.json";
-import { JSONSchema6, JSONSchema6Object } from "json-schema";
+import { JSONSchema6, JSONSchema6Definition, JSONSchema6Object } from "json-schema";
 import FHIREffectError, { fail } from "../error";
 
 interface MasterSchema {
@@ -114,4 +114,14 @@ export function lookupCardinality(schema: JSONSchema6): Effect.Effect<TypeCardin
     )),
     Match.orElse(() => fail(`Unhandled schema shape for schema ${schema}`))
   )
+}
+
+type ComplexSchema = Omit<JSONSchema6, "properties" | "type"> & {
+  properties: {
+    [key: string]: JSONSchema6Definition;
+  },
+  type: "object"
+}
+export function isComplexSchema(schema: JSONSchema6): schema is ComplexSchema {
+  return schema.properties !== undefined && schema.type === "object";
 }
