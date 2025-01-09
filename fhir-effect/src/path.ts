@@ -1,28 +1,44 @@
-import { Array, Match, Option, pipe, Tuple } from "effect";
+import { Array, Match, Option, pipe, String, Tuple } from "effect";
 
-export const splitPath = (path: string) => path.split(".");
+export const split = (path: string) => String.split(path, ".");
 
 export const parent = (path: string) => {
-  const split = splitPath(path);
-  return split.slice(0, split.length - 1).join(".");
+  const sub = split(path);
+  return sub.slice(0, split.length - 1).join(".");
 };
 
+export function last(path: string) {
+  return pipe(
+    path,
+    split,
+    Array.last
+  )
+}
+
 export const lastExn = (path: string) => pipe(
-  splitPath(path),
+  split(path),
   Array.last,
   Option.getOrThrow
 );
 
-export const hd = (path: string) => splitPath(path)[0];
+export const hd = (path: string) => split(path)[0];
 
-export const removeHd = (path: string) => splitPath(path).slice(1).join(".");
+export const removeHd = (path: string) => split(path).slice(1).join(".");
 
 export const removeLast = (path: string) => path.split(".").slice(0, -1).join(".");
 
-export const levels = (path: string) => splitPath(path).length - 1;
+export const length = (path: string) => split(path).length - 1;
+
+export function nth(path: string, n: number) {
+  return pipe(
+    path,
+    split,
+    Array.get(n)
+  )
+}
 
 export const nthExn = (path: string, n: number) => pipe(
-  splitPath(path),
+  split(path),
   Array.unsafeGet(n)
 );
 

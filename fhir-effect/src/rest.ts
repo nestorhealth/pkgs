@@ -2,12 +2,6 @@ import { evaluateSync } from "./fhirpath";
 import { ResourceType } from "../types";
 import { Effect, Match } from "effect";
 
-interface fetchFhirOne {
-  resourceType: ResourceType;
-  logicalId: string;
-  accessToken?: string;
-}
-
 export const makeHeaders = (token: string | undefined) => Match.value(token).pipe(
   Match.when(undefined, () => ({ "Content-Type": "application/json+fhir" })),
   Match.when(Match.string, () => ({ "Content-Type": "application/json+fhir", "Authorization": `Bearer ${token}` })),

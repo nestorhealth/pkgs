@@ -1,0 +1,8 @@
+{
+  "extends": "@nestorhealth/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "exclude": ["codegen.ts", "**/*.test.ts", "./dist/**/*"]
+}
