@@ -8,13 +8,16 @@ import {
   Effect,
   HashSet,
   Match,
+  Option,
   pipe,
   Record,
+  Tuple,
 } from "effect";
 import { isPrimitiveType } from "../typecheck";
 import * as Path from "./path";
 import * as MasterDef from "./master-def";
-import { fail } from "../error";
+import FHIREffectError, { fail } from "../error";
+import { JSONSchema6 } from "json-schema";
 
 interface TypedModel extends Model {
   path2Type: Record<string, FHIRType>;
@@ -87,28 +90,14 @@ export function isValidPath(path: string, resourceType: ResourceType) {
   return R4Model.path2Type[joined] !== undefined;
 }
 
-type Inf = number & Brand.Brand<"Inf">;
-const Inf = Brand.refined<Inf>(
-  (n) => !Number.isFinite(n),
-  (n) => Brand.error(`Expected ${n} to be Infinity.`),
-);
-
-/**
- * The Cardinality + FHIRType named 2-tuple (record)
- * Typecard.cardinality is 1 if the object is singleton, Inf otherwise to represent an array.
- */
-interface Typecard {
-  type: string;
-  cardinality: 1 | Inf;
-}
-
-export function lookupTypecard(path: string) {
+export function lookupCardinality(path: string) {
   const len = Path.length(path);
   if (len <= 1) {
-    return fail(`Expected (Path.length path) > 1, but got ${len}`)
+    return fail(`Expected (Path.length path) > 1, but got ${len}`);
   }
-  
+
   const hd = Path.hd(path);
   const parentSchema = MasterDef.findDefinition(hd);
-  return Effect.map(parentSchema, (schema) => schema)
+
+  return Effect.map(parentSchema, (schema) => schema);
 }

@@ -1,4 +1,4 @@
-import { Array, Effect, Match, Option, pipe, Record, String } from "effect";
+import { Array, Brand, Effect, Match, Option, pipe, Record, String, Tuple } from "effect";
 import _master from "../fhir.schema.json";
 import { JSONSchema6, JSONSchema6Object } from "json-schema";
 import FHIREffectError, { fail } from "../error";
@@ -28,7 +28,7 @@ export function findDefinition(
   );
 }
 
-export function lookup(
+export function findPropSchema(
   schema: JSONSchema6,
   property: string
 ): Effect.Effect<JSONSchema6, FHIREffectError> {
@@ -69,5 +69,49 @@ export function jump(
         })
       )
     })
+  )
+}
+
+type One = number & Brand.Brand<"One">;
+const One = Brand.refined<One>(
+  (n) => n === 1,
+  (n) => Brand.error(`Expected ${n} to equal 1.`)
+)
+type Inf = number & Brand.Brand<"Inf">;
+const Inf = Brand.refined<Inf>(
+  (n) => !Number.isFinite(n),
+  (n) => Brand.error(`Expected ${n} to be Infinity.`),
+);
+
+type TypeCardinality = [string, One | Inf];
+
+export function lookupCardinality(schema: JSONSchema6): Effect.Effect<TypeCardinality, FHIREffectError> {
+  return Match.value(schema).pipe(
+    Match.when(
+      { type: "array", items: { $ref: Match.string } },
+      ({ items: { $ref } }) => pipe(
+        $ref,
+        last,
+        Option.match({
+          onNone: () => fail(`Couldn't resolve the Array schema items.$ref string`),
+          onSome: (refName) => Effect.succeed(
+            Tuple.make(refName, Inf(Infinity))
+          )
+        })
+      )
+    ),
+    Match.when({
+      $ref: Match.string
+    }, ({ $ref }) => pipe(
+      $ref,
+      last,
+      Option.match({
+        onNone: () => fail(`Couldn't resolve the Singleton schema $ref string`),
+        onSome: (refName) => Effect.succeed(
+          Tuple.make(refName, One(1))
+        )
+      })
+    )),
+    Match.orElse(() => fail(`Unhandled schema shape for schema ${schema}`))
   )
 }

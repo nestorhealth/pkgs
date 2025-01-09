@@ -2,6 +2,7 @@ import { Effect, Exit } from "effect";
 import * as MasterDef from "./master-def";
 import { RESOURCE_TYPES } from "../constants";
 import { describe, suite, test, expect } from "vitest";
+import { JSONSchema6 } from "json-schema";
 
 describe("MasterDef module", () => {
   suite("[[ MasterDef.findDefinition (key : string) : JSONSchema6 ]]", () => {
@@ -52,4 +53,19 @@ describe("MasterDef module", () => {
       expect(Exit.isFailure(result)).toBe(true);
     })
   });
+  
+  suite("[[ MasterDef.lookupCardinality (schema : JSONSchema6) ]]", () => {
+    test("Success Example Case 1 : Hardcoded Array Schema", () => {
+      const input: JSONSchema6 = { type: "array", items: { $ref: "#/definitions/string" } };
+      const program = MasterDef.lookupCardinality(input);
+      const result = Effect.runSync(program);
+      expect(result).toEqual([ "string", Infinity ]);
+    })
+    test("Success Example Case 2 : Hardcoded Singleton Schema", () => {
+      const input: JSONSchema6 = { $ref: "#/definitions/url" };
+      const program = MasterDef.lookupCardinality(input);
+      const result = Effect.runSync(program);
+      expect(result).toEqual([ "url", 1 ]);
+    })
+  })
 });
