@@ -1,10 +1,11 @@
 import { evaluate, Model } from "fhirpath";
 import { ComplexType, ResourceType, FHIRType } from "../types";
 import _R4Model from "fhirpath/fhir-context/r4";
-import { Array, Data, HashSet, Match, pipe, Record } from "effect";
+import { Array, Brand, Data, Effect, HashSet, Match, Option, pipe, Record, Schema } from "effect";
 import { isPrimitiveType } from "../typecheck";
+import _master from "../fhir.schema.json";
 import * as Path from "./path";
-import * as Tree from "./tree";
+import { JSONSchema6 } from "json-schema";
 
 interface TypedModel extends Model {
   path2Type: Record<string, FHIRType>;
@@ -63,4 +64,19 @@ export function flatLeaves(fhirType: ComplexType, parentPath: string): HashSet.H
 export function isValidPath(path: string, resourceType: ResourceType) {
   const joined = Path.join(resourceType, path);
   return R4Model.path2Type[joined] !== undefined;
+}
+
+type Inf = number & Brand.Brand<"Inf">;
+const Inf = Brand.refined<Inf>(
+  (n) => !Number.isFinite(n),
+  (n) => Brand.error(`Expected ${n} to be Infinity.`)
+);
+
+/**
+ * The Cardinality + FHIRType Info record
+ * CType.cardinality is 1 if the object is singleton, Inf otherwise to represent an array.
+ */
+interface CardType {
+  cardinality: 1 | Inf;
+  type: FHIRType;
 }

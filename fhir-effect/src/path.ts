@@ -38,6 +38,10 @@ export function removeLast(path: string) {
 }
 
 export function length(path: string) {
+  return split(path).length;
+}
+
+export function levels(path: string) {
   return split(path).length - 1;
 }
 
