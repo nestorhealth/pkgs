@@ -1,12 +1,18 @@
-import { Array, Match, Option, pipe, Schema } from "effect";
+import { Schema } from "effect";
+
+export type PrimitiveSingleton =
+  | string
+  | number
+  | boolean;
+
+export type PrimitiveCollection =
+  | readonly string[]
+  | readonly number[]
+  | readonly boolean[];
 
 export type Leaf =
-  | string
-  | readonly string[]
-  | number
-  | readonly number[]
-  | boolean
-  | readonly boolean[];
+  | PrimitiveSingleton
+  | PrimitiveCollection
   
 export type Tree = {
   readonly [key: string]:

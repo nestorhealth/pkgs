@@ -3,7 +3,8 @@ import { ComplexType, ResourceType, FHIRType } from "../types";
 import _R4Model from "fhirpath/fhir-context/r4";
 import { Array, Data, HashSet, Match, pipe, Record } from "effect";
 import { isPrimitiveType } from "../typecheck";
-import { hd, removeHd, joinPaths } from "./path";
+import * as Path from "./path";
+import * as Tree from "./tree";
 
 interface TypedModel extends Model {
   path2Type: Record<string, FHIRType>;
@@ -26,7 +27,7 @@ export interface PathRelation {
   parent: string;
 }
 
-const resolve = (pathRelation: PathRelation) => `${pathRelation.parent}.${removeHd(pathRelation.path)}`;
+const resolve = (pathRelation: PathRelation) => `${pathRelation.parent}.${Path.removeHd(pathRelation.path)}`;
 
 export function normalizePathRelations(pathRelations: HashSet.HashSet<PathRelation>, rootPath: string): string[] {
   return HashSet.reduce(pathRelations, [] as string[], 
@@ -47,7 +48,7 @@ export function flatLeaves(fhirType: ComplexType, parentPath: string): HashSet.H
 
   return pipe(
     PathFHIRTypeEntries,
-    Array.filter(([ path ]) => hd(path) === fhirType),
+    Array.filter(([ path ]) => Path.hd(path) === fhirType),
     Array.reduce(HashSet.empty<PathRelation>(), (acc, [ path, childType ]) => Match.value(childType).pipe(
       Match.when(isPrimitiveType, _ => HashSet.add(acc, make(path, parentPath))),
       Match.when("Extension", _ => acc),
@@ -60,6 +61,6 @@ export function flatLeaves(fhirType: ComplexType, parentPath: string): HashSet.H
 }
 
 export function isValidPath(path: string, resourceType: ResourceType) {
-  const joined = joinPaths(resourceType, path);
+  const joined = Path.join(resourceType, path);
   return R4Model.path2Type[joined] !== undefined;
 }

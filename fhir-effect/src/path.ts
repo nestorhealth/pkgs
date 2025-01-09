@@ -1,11 +1,13 @@
 import { Array, Match, Option, pipe, String, Tuple } from "effect";
 
-export const split = (path: string) => String.split(path, ".");
+export function split(path: string) {
+  return String.split(path, ".");
+}
 
-export const parent = (path: string) => {
+export function parent(path: string) {
   const sub = split(path);
   return sub.slice(0, split.length - 1).join(".");
-};
+}
 
 export function last(path: string) {
   return pipe(
@@ -15,19 +17,29 @@ export function last(path: string) {
   )
 }
 
-export const lastExn = (path: string) => pipe(
-  split(path),
-  Array.last,
-  Option.getOrThrow
-);
+export function lastExn(path: string) {
+  return pipe(
+    split(path),
+    Array.last,
+    Option.getOrThrow
+  );
+}
 
-export const hd = (path: string) => split(path)[0];
+export function hd(path: string) {
+  return split(path)[0];
+}
 
-export const removeHd = (path: string) => split(path).slice(1).join(".");
+export function removeHd(path: string) {
+  return split(path).slice(1).join(".");
+}
 
-export const removeLast = (path: string) => path.split(".").slice(0, -1).join(".");
+export function removeLast(path: string) {
+  return path.split(".").slice(0, -1).join(".");
+}
 
-export const length = (path: string) => split(path).length - 1;
+export function length(path: string) {
+  return split(path).length - 1;
+}
 
 export function nth(path: string, n: number) {
   return pipe(
@@ -37,17 +49,21 @@ export function nth(path: string, n: number) {
   )
 }
 
-export const nthExn = (path: string, n: number) => pipe(
-  split(path),
-  Array.unsafeGet(n)
-);
+export function nthExn(path: string, n: number) {
+  return pipe(
+    split(path),
+    Array.unsafeGet(n)
+  );
+}
 
-export const joinPaths = (path1: string, path2: string) => Match.value(Tuple.make(path1, path2)).pipe(
-  Match.when([ "", "" ], () => ""),
-  Match.when([ "", Match.nonEmptyString ], () => path2),
-  Match.when([ Match.nonEmptyString, "" ], () => path1),
-  Match.orElse(() => `${path1}.${path2}`)
-);
+export function join(path1: string, path2: string) {
+  return Match.value(Tuple.make(path1, path2)).pipe(
+    Match.when(["", ""], () => ""),
+    Match.when(["", Match.nonEmptyString], () => path2),
+    Match.when([Match.nonEmptyString, ""], () => path1),
+    Match.orElse(() => `${path1}.${path2}`)
+  );
+}
 
 export function difference(path1: string, path2: string) {
   return pipe(
