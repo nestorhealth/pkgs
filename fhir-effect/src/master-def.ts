@@ -41,14 +41,14 @@ export function findSchema(
   );
 }
 
-export function props(key: string, removeExtensionPaths = true) {
+export function props(key: string, ignoreExtensions = true) {
   return findSchema(key).pipe(
     Effect.flatMap(
       (schema) => Match.value(schema).pipe(
         Match.when({ properties: Match.record }, ({ properties }) => pipe(
           properties,
           Record.keys,
-          (keys) => removeExtensionPaths ? Array.filter(keys, key => key.charAt(0) !== "_" && key !== "extension") : keys,
+          (keys) => ignoreExtensions ? Array.filter(keys, key => key.charAt(0) !== "_" && key !== "extension" && key !== "modifierExtension") : keys,
           Effect.succeed
         )),
         Match.orElse(({ type }) => fail(`Expected key ${key} to be an object type, but got ${type}`))
