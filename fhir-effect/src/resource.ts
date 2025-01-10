@@ -31,7 +31,7 @@ export function hasProp(
   resourceType: ResourceType,
   propPath: string,
 ): Effect.Effect<boolean, FHIREffectError> {
-  return MasterDef.findDefinition(resourceType).pipe(
+  return MasterDef.findSchema(resourceType).pipe(
     Effect.flatMap((definition) =>
       Match.value(definition).pipe(
         Match.when(MasterDef.isComplexSchema, (complexSchema) =>

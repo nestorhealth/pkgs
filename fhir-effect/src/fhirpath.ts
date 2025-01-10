@@ -90,14 +90,17 @@ export function isValidPath(path: string, resourceType: ResourceType) {
   return R4Model.path2Type[joined] !== undefined;
 }
 
-export function lookupCardinality(path: string) {
-  const len = Path.length(path);
-  if (len <= 1) {
-    return fail(`Expected (Path.length path) > 1, but got ${len}`);
+export function l1RefSchema(path: string) {
+  const pathLength = Path.length(path);
+  if (pathLength !== 2) {
+    return fail(
+      `Need exactly 2 path segments in l1Schema, but got ${pathLength}`,
+    );
   }
-
-  const hd = Path.hd(path);
-  const parentSchema = MasterDef.findDefinition(hd);
-
-  return Effect.map(parentSchema, (schema) => schema);
+  const [hd, childPath] = Path.split(path);
+  return MasterDef.findSchema(hd).pipe(
+    Effect.flatMap((resourceSchema) =>
+      MasterDef.findPropSchemaRef(resourceSchema, childPath),
+    ),
+  );
 }
