@@ -41,6 +41,22 @@ export function findSchema(
   );
 }
 
+export function props(key: string, removeExtensionPaths = true) {
+  return findSchema(key).pipe(
+    Effect.flatMap(
+      (schema) => Match.value(schema).pipe(
+        Match.when({ properties: Match.record }, ({ properties }) => pipe(
+          properties,
+          Record.keys,
+          (keys) => removeExtensionPaths ? Array.filter(keys, key => key.charAt(0) !== "_" && key !== "extension") : keys,
+          Effect.succeed
+        )),
+        Match.orElse(({ type }) => fail(`Expected key ${key} to be an object type, but got ${type}`))
+      )
+    )
+  )
+}
+
 export function findPropSchemaRef(
   schema: JSONSchema6,
   property: string,
@@ -142,14 +158,15 @@ export function matchTypeCardinality<OPS, OPA, OCS, OCA>(
     Match.when(isPrimitiveSingleton, self => onPrimitiveSingleton(self)),
     Match.when(isPrimitiveArray, self => onPrimitiveArray(self)),
     Match.when(isComplexSingleton, self => onComplexSingleton(self)),
-    Match.when(isComplexArray, self => onComplexArray(self))
+    Match.when(isComplexArray, self => onComplexArray(self)),
+    Match.orElse(() => { throw new Error() })
   );
 }
 
 export function lookupCardinality(
-  refSchema: JSONSchema6,
+  schema: JSONSchema6,
 ): Effect.Effect<TypeCardinality, FHIREffectError> {
-  return Match.value(refSchema).pipe(
+  return Match.value(schema).pipe(
     Match.when(
       { type: "array", items: { $ref: Match.string } },
       ({ items: { $ref } }) =>
@@ -179,7 +196,8 @@ export function lookupCardinality(
           }),
         ),
     ),
-    Match.orElse(() => fail(`Unhandled schema shape for schema ${refSchema}`)),
+    Match.when(isEnumSchema, () => Effect.succeed(Tuple.make("code", One(1)))),
+    Match.orElse(() => fail(`Unhandled schema shape for schema ${JSON.stringify(schema, null, 2)}`)),
   );
 }
 
@@ -198,4 +216,11 @@ type RefSchema = Omit<JSONSchema6, "$ref"> & {
 };
 export function isRefSchema(schema: JSONSchema6): schema is RefSchema {
   return schema.$ref !== undefined;
+}
+
+type EnumSchema = Omit<JSONSchema6, "enum"> & {
+  enum: string[];
+}
+export function isEnumSchema(schema: JSONSchema6): schema is EnumSchema {
+  return schema.enum !== undefined && Array.isArray(schema.enum) && Array.every(schema.enum, code => typeof code === "string");
 }
