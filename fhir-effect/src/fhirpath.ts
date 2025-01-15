@@ -151,7 +151,3 @@ export function typecardExn(path: string) {
       ),
   );
 }
-
-childrenExn("Medication").forEach(key => {
-  console.log("here", key);
-})
