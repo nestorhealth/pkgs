@@ -1,8 +1,8 @@
 import { Effect, Match, pipe, Schema } from "effect";
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import FHIREffectError, { fail } from "../error";
-import { ResourceType } from "../types";
-import { Path } from "..";
+import * as Path from "./path";
+
 
 const ElementDefinition = Schema.Struct({
   path: Schema.String,
@@ -107,5 +107,3 @@ export function lookupChild(path: string) {
 export const lookupChildExn = (path: string) => Effect.runSync(lookupChild(path));
 
 export const snapshotExn = (id: string) => Effect.runSync(snapshot(id));
-
-console.log(lookupChildExn("Patient.id"))
