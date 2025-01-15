@@ -11,6 +11,7 @@ import {
   Option,
   pipe,
   Record,
+  String,
   Tuple,
 } from "effect";
 import { isPrimitiveType } from "../typecheck";
@@ -101,6 +102,21 @@ export function l1RefSchema(path: string) {
   return MasterDef.findSchema(hd).pipe(
     Effect.flatMap((resourceSchema) =>
       MasterDef.findPropSchemaRef(resourceSchema, childPath),
+    ),
+  );
+}
+
+export function childrenExn(path: string) {
+  return Effect.runSync(
+    MasterDef.findSchema(path).pipe(
+      Effect.map(
+        (schema) => Match.value(schema).pipe(
+          Match.when({ properties: Match.record }, ({ properties }) =>
+            Object.keys(properties).filter(propname => propname.charAt(0) !== "_")
+          ),
+          Match.orElse(() => { throw new Error() })
+        )
+      )
     ),
   );
 }
