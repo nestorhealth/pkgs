@@ -20,6 +20,7 @@ import * as MasterDef from "./master-def";
 import * as TypeCardinality from "./type-cardinality";
 import FHIREffectError, { fail } from "../error";
 import { JSONSchema6 } from "json-schema";
+import { path } from "d3";
 
 interface TypedModel extends Model {
   path2Type: Record<string, FHIRType>;
@@ -107,33 +108,48 @@ export function l1RefSchema(path: string) {
   );
 }
 
-const defaultFilter = (key: string) => key.charAt(0) !== "_";
+const ResourcePropnames = ["id", "meta", "implicitRules", "language"];
+
+const DomainResourcePropnames = [
+  "text",
+  "contained",
+  "extension",
+  "modifierExtension",
+];
+
+const unsupportedPropnames = [
+  ...DomainResourcePropnames,
+  ...ResourcePropnames.filter((propname) => propname !== "id"),
+];
+  
+
+export const isDifferentialPropname = (key: string) =>
+  key.charAt(0) !== "_" && !unsupportedPropnames.includes(key);
 
 interface Options {
   filter: (key: string) => boolean;
 }
-export function childrenExn(
+
+export function children(
   path: string,
-  opts: Options = { filter: defaultFilter },
+  opts: Options = { filter: isDifferentialPropname },
 ) {
-  return Effect.runSync(
-    MasterDef.findSchema(path).pipe(
-      Effect.match({
-        onFailure: (e) => {
-          throw e;
-        },
-        onSuccess: (schema) =>
-          Match.value(schema).pipe(
-            Match.when({ properties: Match.record }, ({ properties }) =>
-              Object.keys(properties).filter(opts.filter),
-            ),
-            Match.orElse((schema) => {
-              throw new FHIREffectError(
-                `Expected an object path, but instead got ${JSON.stringify(schema, null, 2)}`,
-              );
-            }),
+  return MasterDef.findSchema(path).pipe(
+    Effect.match({
+      onFailure: (e) => {
+        throw e;
+      },
+      onSuccess: (schema) =>
+        Match.value(schema).pipe(
+          Match.when({ properties: Match.record }, ({ properties }) =>
+            Object.keys(properties).filter(opts.filter),
           ),
-      }),
-    ),
+          Match.orElse((schema) => {
+            throw new FHIREffectError(
+              `Expected an object path, but instead got ${JSON.stringify(schema, null, 2)}`,
+            );
+          }),
+        ),
+    }),
   );
 }
