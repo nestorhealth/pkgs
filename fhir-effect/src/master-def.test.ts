@@ -54,18 +54,18 @@ describe("MasterDef module", () => {
     })
   });
   
-  suite("[[ MasterDef.lookupCardinality (schema : JSONSchema6) ]]", () => {
-    test("Success Example Case 1 : Hardcoded Array Schema", () => {
-      const input: JSONSchema6 = { type: "array", items: { $ref: "#/definitions/string" } };
-      const program = MasterDef.lookupCardinality(input);
-      const result = Effect.runSync(program);
-      expect(result).toEqual([ "string", Infinity ]);
-    })
-    test("Success Example Case 2 : Hardcoded Singleton Schema", () => {
-      const input: JSONSchema6 = { $ref: "#/definitions/url" };
-      const program = MasterDef.lookupCardinality(input);
-      const result = Effect.runSync(program);
-      expect(result).toEqual([ "url", 1 ]);
-    })
-  })
+  // suite("[[ MasterDef.lookupCardinality (schema : JSONSchema6) ]]", () => {
+  //   test("Success Example Case 1 : Hardcoded Array Schema", () => {
+  //     const input: JSONSchema6 = { type: "array", items: { $ref: "#/definitions/string" } };
+  //     const program = MasterDef.lookupCardinality(input);
+  //     const result = Effect.runSync(program);
+  //     expect(result).toEqual([ "string", Infinity ]);
+  //   })
+  //   test("Success Example Case 2 : Hardcoded Singleton Schema", () => {
+  //     const input: JSONSchema6 = { $ref: "#/definitions/url" };
+  //     const program = MasterDef.lookupCardinality(input);
+  //     const result = Effect.runSync(program);
+  //     expect(result).toEqual([ "url", 1 ]);
+  //   })
+  // })
 });

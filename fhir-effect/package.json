@@ -5,10 +5,12 @@
   "main": "index.js",
   "exports": {
     ".": "./dist/index.js",
+    "./FHIRSchema": "./dist/src/schema/index.js",
     "./types": "./dist/types.d.ts",
     "./typecheck": "./dist/typecheck.js",
     "./constants": "./dist/constants.js",
     "./fp": "./dist/src/fhirpath.js",
+    "./TypeCardinality": "./dist/src/type-cardinality.js",
     "./Path": "./dist/src/path.js",
     "./Tree": "./dist/src/tree.js",
     "./Resource": "./dist/src/resource.js"
@@ -23,8 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "effect": "^3.12.1",
-    "fhirpath": "^3.15.2",
-    "hl7.fhir.r4.core": "^4.0.1"
+    "fhirpath": "^3.15.2"
   },
   "devDependencies": {
     "@nestorhealth/tsconfig": "workspace:^",

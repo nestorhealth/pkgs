@@ -17,6 +17,7 @@ import {
 import { isPrimitiveType } from "../typecheck";
 import * as Path from "./path";
 import * as MasterDef from "./master-def";
+import * as TypeCardinality from "./type-cardinality";
 import FHIREffectError, { fail } from "../error";
 import { JSONSchema6 } from "json-schema";
 
@@ -134,20 +135,5 @@ export function childrenExn(
           ),
       }),
     ),
-  );
-}
-
-export function typecardExn(path: string) {
-  const resourceType = Path.hd(path);
-  const difference = Path.difference(path, resourceType);
-  const childHead = Path.hd(difference);
-
-  return Effect.runSync(
-    MasterDef
-      .findSchema(resourceType)
-      .pipe(
-        Effect.flatMap(schema => MasterDef.findPropSchemaRef(schema, childHead)),
-        Effect.flatMap(schema => MasterDef.lookupCardinality(schema))
-      ),
   );
 }

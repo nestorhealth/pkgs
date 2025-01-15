@@ -1,0 +1,19 @@
+import { Brand, Schema } from "effect";
+
+export type base64Binary = string & Brand.Brand<"base64Binary">;
+export type canonical = string & Brand.Brand<"canonical">;
+export type code = string & Brand.Brand<"code">;
+export type date = string & Brand.Brand<"date">;
+export type dateTime = string & Brand.Brand<"dateTime">;
+export type decimal = number & Brand.Brand<"decimal">;
+export type id = string & Brand.Brand<"id">;
+export type instant = string & Brand.Brand<"instant">;
+export type integer = number & Brand.Brand<"integer">;
+export type integer64 = string & Brand.Brand<"integer64">;
+export type markdown = string & Brand.Brand<"markdown">;
+export type oid = string & Brand.Brand<"oid">;
+export type positiveInt = number & Brand.Brand<"positiveInt">;
+export type time = string & Brand.Brand<"time">;
+export type unsignedInt = number & Brand.Brand<"unsignedInt">;
+export type uri = string & Brand.Brand<"uri">;
+export type uuid = string & Brand.Brand<"uuid">;
