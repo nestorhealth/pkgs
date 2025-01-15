@@ -106,17 +106,35 @@ export function l1RefSchema(path: string) {
   );
 }
 
-export function childrenExn(path: string) {
+interface Options {
+  filter: (key: string) => boolean;
+}
+export function childrenExn(
+  path: string,
+  opts: Options = { 
+    filter: (propName) => propName.charAt(0) !== "_"
+  },
+) {
   return Effect.runSync(
     MasterDef.findSchema(path).pipe(
-      Effect.map(
-        (schema) => Match.value(schema).pipe(
-          Match.when({ properties: Match.record }, ({ properties }) =>
-            Object.keys(properties).filter(propname => propname.charAt(0) !== "_")
+      Effect.match({
+        onFailure: (e) => {
+          throw e;
+        },
+        onSuccess: (schema) =>
+          Match.value(schema).pipe(
+            Match.when({ properties: Match.record }, ({ properties }) =>
+              Object.keys(properties).filter(opts.filter),
+            ),
+            Match.orElse((schema) => {
+              throw new FHIREffectError(
+                `Expected an object path, but instead got ${JSON.stringify(schema, null, 2)}`,
+              );
+            }),
           ),
-          Match.orElse(() => { throw new Error() })
-        )
-      )
+      }),
     ),
   );
 }
+
+console.log(childrenExn("Patient"));
