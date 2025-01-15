@@ -7,10 +7,17 @@ import { Path } from "..";
 const ElementDefinition = Schema.Struct({
   path: Schema.String,
   short: Schema.optional(Schema.String),
-});
-
-const StructureDefinition_snapshot = Schema.Struct({
-  element: Schema.Array(ElementDefinition),
+  min: Schema.Literal(0, 1),
+  max: Schema.Literal("1", "*"),
+  type: Schema.Array(
+    Schema.Struct({
+      code: Schema.String,
+      profile: Schema.Array(Schema.String),
+      targetProfile: Schema.Array(Schema.String),
+      aggregation: Schema.Array(Schema.String),
+      versioning: Schema.optional(Schema.String),
+    }),
+  ),
 });
 
 const StructureDefinition = Schema.Struct({
@@ -21,7 +28,9 @@ const StructureDefinition = Schema.Struct({
   status: Schema.Literal("draft", "active", "retired", "unknown"),
   abstract: Schema.Boolean,
   kind: Schema.Literal("primitive-type", "complex-type", "resource", "logical"),
-  snapshot: StructureDefinition_snapshot,
+  snapshot: Schema.Struct({
+    element: Schema.Array(ElementDefinition),
+  }),
 
   baseDefinition: Schema.optional(Schema.String),
   title: Schema.optional(Schema.String),
@@ -57,15 +66,15 @@ const toss = (msg?: string) => {
 const last = (urlLike: string) =>
   pipe(urlLike.split("/"), (split) => split[split.length - 1]);
 
-export function findDefinition(resourceType: string) {
+export function structureDefinition(resourceType: string) {
   return pipe(resourceType, readStructureDefinition);
 }
 
-export const findDefinitionExn = (resourceType: string) =>
-  Effect.runSync(findDefinition(resourceType));
+export const structureDefinitionExn = (resourceType: string) =>
+  Effect.runSync(structureDefinition(resourceType));
 
-export function baseDefinition(id: string) {
-  return findDefinition(id).pipe(
+export function resolve(id: string) {
+  return structureDefinition(id).pipe(
     Effect.flatMap((structureDefinition) =>
       Match.value(structureDefinition.baseDefinition).pipe(
         Match.when(Match.undefined, () =>
@@ -79,16 +88,24 @@ export function baseDefinition(id: string) {
   );
 }
 
-export function props(id: string) {
-  return findDefinition(id).pipe(
-    Effect.map((structDef) =>
-      structDef.snapshot.element.map(
-        (elementDefinition) => elementDefinition.path,
+export function snapshot(id: string) {
+  return structureDefinition(id).pipe(
+    Effect.map((structDef) => structDef.snapshot),
+  );
+}
+
+export function lookupChild(path: string) {
+  return pipe(path, Path.hd, structureDefinition).pipe(
+    Effect.flatMap(({ snapshot: { element } }) =>
+      Effect.fromNullable(
+        element.find((elementDefinition) => elementDefinition.path === path),
       ),
     ),
   );
 }
 
-export const propsExn = (id: string) => Effect.runSync(props(id));
-export const baseDefinitionExn = (id: string) =>
-  Effect.runSync(baseDefinition(id));
+export const lookupChildExn = (path: string) => Effect.runSync(lookupChild(path));
+
+export const snapshotExn = (id: string) => Effect.runSync(snapshot(id));
+
+console.log(lookupChildExn("Patient.id"))
