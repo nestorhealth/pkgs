@@ -106,14 +106,14 @@ export function l1RefSchema(path: string) {
   );
 }
 
+const defaultFilter = (key: string) => key.charAt(0) !== "_";
+
 interface Options {
   filter: (key: string) => boolean;
 }
 export function childrenExn(
   path: string,
-  opts: Options = { 
-    filter: (propName) => propName.charAt(0) !== "_"
-  },
+  opts: Options = { filter: defaultFilter },
 ) {
   return Effect.runSync(
     MasterDef.findSchema(path).pipe(
@@ -137,4 +137,21 @@ export function childrenExn(
   );
 }
 
-console.log(childrenExn("Patient"));
+export function typecardExn(path: string) {
+  const resourceType = Path.hd(path);
+  const difference = Path.difference(path, resourceType);
+  const childHead = Path.hd(difference);
+
+  return Effect.runSync(
+    MasterDef
+      .findSchema(resourceType)
+      .pipe(
+        Effect.flatMap(schema => MasterDef.findPropSchemaRef(schema, childHead)),
+        Effect.flatMap(schema => MasterDef.lookupCardinality(schema))
+      ),
+  );
+}
+
+childrenExn("Medication").forEach(key => {
+  console.log("here", key);
+})

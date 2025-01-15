@@ -23,7 +23,8 @@
   "license": "ISC",
   "dependencies": {
     "effect": "^3.12.1",
-    "fhirpath": "^3.15.2"
+    "fhirpath": "^3.15.2",
+    "hl7.fhir.r4.core": "^4.0.1"
   },
   "devDependencies": {
     "@nestorhealth/tsconfig": "workspace:^",
