@@ -3,6 +3,7 @@ import { ComplexType, PrimitiveType } from "../types";
 import { isPrimitiveType } from "../typecheck";
 import * as Path from "./path";
 import * as MasterDef from "./master-def";
+import * as UrlLike from "./url-like";
 import FHIREffectError, { fail } from "../error";
 import { JSONSchema6 } from "json-schema";
 
@@ -61,36 +62,25 @@ export function match<OPS, OPA, OCS, OCA>(
 
 function lookupCardinality(
   schema: JSONSchema6,
-): Effect.Effect<TypeCardinality, FHIREffectError> {
+): Effect.Effect<TypeCardinality, FHIREffectError | Error> {
   return Match.value(schema).pipe(
     Match.when(
       { type: "array", items: { $ref: Match.string } },
-      ({ items: { $ref } }) =>
-        pipe(
-          $ref,
-          last,
-          Option.match({
-            onNone: () =>
-              fail(`Couldn't resolve the Array schema items.$ref string`),
-            onSome: (refName) =>
-              Effect.succeed(Tuple.make(refName, Inf(Infinity))),
-          }),
-        ),
+      ({ items: { $ref } }) => {
+        return UrlLike.last($ref).pipe(
+          Effect.map((typeName) => Tuple.make(typeName, Inf(Infinity)))
+        )
+      }
     ),
     Match.when(
       {
         $ref: Match.string,
       },
-      ({ $ref }) =>
-        pipe(
-          $ref,
-          last,
-          Option.match({
-            onNone: () =>
-              fail(`Couldn't resolve the Singleton schema $ref string`),
-            onSome: (refName) => Effect.succeed(Tuple.make(refName, One(1))),
-          }),
-        ),
+      ({ $ref }) => {
+        return UrlLike.last($ref).pipe(
+          Effect.map((typeName) => Tuple.make(typeName, One(1)))
+        )
+      }
     ),
     Match.when(MasterDef.isEnumSchema, () => Effect.succeed(Tuple.make("code", One(1)))),
     Match.orElse(() => fail(`Unhandled schema shape for schema ${JSON.stringify(schema, null, 2)}`)),
@@ -106,4 +96,3 @@ export function lookup(path: string) {
   )
 }
 export const lookupExn = (path: string) => Effect.runSync(lookup(path));
-const last = (url: string) => pipe(url, String.split("/"), Array.last);

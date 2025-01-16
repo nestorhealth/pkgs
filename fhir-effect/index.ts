@@ -6,3 +6,4 @@ export * as Path from "./src/path";
 export * as Bundle from "./src/bundle";
 export * as MasterDef from "./src/master-def";
 export * as TypeCardinality from "./src/type-cardinality";
+export * as UrlLike from "./src/url-like";
